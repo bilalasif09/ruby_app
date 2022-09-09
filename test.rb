@@ -1,9 +1,7 @@
 require 'rspec'
 require_relative 'main'
 
-f = File.open("#{Dir.pwd}/webserver.log")
-file = f.readlines.map(&:chomp) 
-f.close
+file = STDIN.map(&:chomp) 
 
 RSpec.describe Main do
     describe '#by_overall_visits_desc' do
