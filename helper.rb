@@ -1,48 +1,39 @@
-module Helper
-    def check_ip adr
+require_relative 'interface'
+class Helper < Interface
+    def self.check_ip adr
         /[0-9]\d\d.[0-9]\d\d.[0-9]\d\d.[0-9]\d\d/.match(adr) ? true : false
     end
-    def check_url url
+    def self.check_url url
         /\//.match(url) ? true : false
     end
-    def get_ip_n_url ln
-        obj = {}
+    def self.get_ip_n_url ln
+        obj = DataLine.new
         ln.split(/ /).each do |ch|
             if check_ip ch
-                obj[:ip] = ch
+                obj.ip = ch
             elsif check_url ch
-                obj[:url] = ch
+                obj.url = ch
             end
         end
-        obj[:ip] and obj[:url] ? obj : nil
+        obj.ip and obj.url ? obj : nil
     end
-    def map_data file
-        data = {}
+    def self.sorted_lists file, &blk
         for line in file
-            obj = get_ip_n_url line
-            next unless obj #invalid data, proceed to next record
-            
-            unless data[obj[:url]]
-                #initialize if page appears first time
-                data[obj[:url]] = {}
-            end
-
-            if data[obj[:url]][obj[:ip]]
-                # if old user request
-                data[obj[:url]][:overall] += 1
+            data_line = get_ip_n_url(line)
+            next unless data_line #invalid data, proceed to next record
+            DataRows.rows[data_line.url] = DataItem.new(Hash.new, 0, 0) unless DataRows.rows[data_line.url] #initialize if page appears first time
+            if DataRows.rows[data_line.url].ips[data_line.ip] # if old user request
+                DataRows.rows[data_line.url].overall += 1
             else
-                data[obj[:url]][obj[:ip]] = true
-                if data[obj[:url]][:unique]
-                    # if new user request after few visits to pages from other user(s)
-                    data[obj[:url]][:unique] += 1 
-                    data[obj[:url]][:overall] += 1
-                else
-                    # if first request on page
-                    data[obj[:url]][:unique] = 1
-                    data[obj[:url]][:overall] = 1
-                end
+                DataRows.rows[data_line.url].ips[data_line.ip] = true
+                DataRows.rows[data_line.url].unique += 1
+                DataRows.rows[data_line.url].overall += 1
             end
         end
-        data
+        yield
+    end
+    def self.sort_data key
+        # sorting alphabetically and based on visits
+        DataRows.rows.sort_by { |url| [-url[1][key], url[0]] }
     end
 end

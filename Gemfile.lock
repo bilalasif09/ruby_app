@@ -20,7 +20,6 @@ PLATFORMS
 
 DEPENDENCIES
   rspec
-  rspec-core
 
 BUNDLED WITH
    2.2.3
